@@ -185,7 +185,7 @@ class GoogleMusicNavigation():
         if playlistid:
             # Display the songs in this playlist. If artist or album is set
             #  (they shouldn't be), ignore them.
-            songs = self.api.getPlaylistSongs(playlistid)
+            songs = self.api.getSongs(playlistid=playlistid)
 
         elif artist or album or genre:
             # Use the other information to display a list of songs
@@ -197,11 +197,11 @@ class GoogleMusicNavigation():
             if genre:
                 selector['genre'] = genre
 
-            songs = self.api.getSongs(selector)
+            songs = self.api.getSongs(selector=selector)
 
         else:
-            # Nothing to go off of, can't display any songs
-            self.common.log('displaySongs: ERROR: NOTHING TO USE.')
+            # No specifier given, display all songs
+            songs = self.aip.getPlaylistSongs('all_songs')
 
         # Add all of the returned songs to the output
         for song in songs:
@@ -223,7 +223,7 @@ class GoogleMusicNavigation():
     def displayPlaylists (self, playlisttype):
         self.common.log('Displaying playlists: type %s' % playlisttype)
 
-        playlists = self.api.getPlaylistsByType(playlisttype)
+        playlists = self.api.getPlaylists(playlisttype)
         for playlist in playlists:
             params = {
                 'action': 'display',
@@ -386,7 +386,7 @@ class GoogleMusicNavigation():
         if not playlistid:
             playlistid = 'all_songs'
 
-        songs = self.api.getPlaylistSongs(playlistid)
+        songs = self.api.getSongs(playlistid)
 
         player = self.xbmc.Player()
         if player.isPlaying():
@@ -413,17 +413,17 @@ class GoogleMusicNavigation():
     
     def updatePlaylists (self, playlisttype, playlistid):
         if playlisttype:
-            self.api.getPlaylistsByType(playlisttype, True)
+            self.api.updatePlaylists(playlisttype)
         elif playlistid:
-            self.api.getPlaylistSongs(playlistid, True)
+            self.api.updateSongs(playlistid)
 
 
     def clearCache(self):
-        self.api.clearAll()
-    #    sqlite_db = os.path.join(self.xbmc.translatePath("special://database"),
-    #        self.settings.getSetting('sqlite_db'))
-    #    if self.xbmcvfs.exists(sqlite_db):
-    #        self.xbmcvfs.delete(sqlite_db)
+    #    self.api.clearAll()
+        sqlite_db = os.path.join(self.xbmc.translatePath("special://database"),
+            self.settings.getSetting('sqlite_db'))
+        if self.xbmcvfs.exists(sqlite_db):
+            self.xbmcvfs.delete(sqlite_db)
 
         self.settings.setSetting("fetched_all_songs", "")
         self.settings.setSetting('firstrun', "")
