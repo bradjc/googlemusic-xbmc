@@ -112,7 +112,6 @@ class GoogleMusicNavigation():
     string.
 
     Returns [] if no context menu items are set up for the item.
-    TODO: convert the ugly text strings to dicts and urllib.urlencode
     """
     def getContextMenu (self, params):
         content    = params.get('content')
@@ -123,21 +122,39 @@ class GoogleMusicNavigation():
 
         if content == 'songs':
             # This item will bring up a bunch of songs.
-            s = '%s?action=play%s' % (self.handle, \
-                ('&playlist_id=%s' % playlistid if playlistid else ''))
-            cm.append((self.language(30301), 'XBMC.RunPlugin(%s)' % s))
-            s += '&shuffle=true'
-            cm.append((self.language(30302), 'XBMC.RunPlugin(%s)' % s))
+            params = {
+                'action': 'play',
+            }
+            if playlistid:
+                params['playlistid'] = playlistid
+            cm.append((self.language(30301),
+                       'XBMC.RunPlugin(%s?%s)' \
+                        % self.handle, urllib.urlencode(params)))
+            params['shuffle'] = 'true'
+            cm.append((self.language(30302),
+                       'XBMC.RunPlugin(%s?%s)' \
+                        % self.handle, urllib.urlencode(params)))
+
 
             if playlistid:
+                params = {
+                    'action': 'update',
+                    'content': 'playlists',
+                    'playlistid': playlistid
+                }
                 cm.append((self.language(30303),
-                    'XBMC.RunPlugin(%s?action=update&content=playlists&playlistid=%s)' \
-                    % (self.handle, playlistid)))
+                    'XBMC.RunPlugin(%s?%s)' \
+                    % (self.handle, urllib.urlencode(params))))
 
         elif content == 'playlists':
+            params = {
+                'action': 'update',
+                'content': 'playlists',
+                'type': ptype,
+            }
             cm.append((self.language(30304),
-                'XBMC.RunPlugin(%s?action=update&content=playlists&type=%s)' \
-                % (self.handle, ptype)))
+                'XBMC.RunPlugin(%s?%s)' \
+                % (self.handle, urllib.urlencode(params))))
 
         return cm
 
