@@ -11,7 +11,7 @@ import GoogleMusicApi
 ADDON = xbmcaddon.Addon(id='plugin.audio.googlemusic')
 
 class GoogleMusicNavigation():
-    def __init__(self):
+    def __init__(self, handle):
         self.xbmc       = sys.modules["__main__"].xbmc
         self.xbmcgui    = sys.modules["__main__"].xbmcgui
         self.xbmcplugin = sys.modules["__main__"].xbmcplugin
@@ -22,16 +22,93 @@ class GoogleMusicNavigation():
         self.dbg        = sys.modules["__main__"].dbg
         self.common     = sys.modules["__main__"].common
 
+        self.handle     = int(handle)
+
         self.api = GoogleMusicApi.GoogleMusicApi()
 
         self.main_menu = (
-            {'title':self.language(30201), 'params':{'path':"playlist", 'playlist_id':"all_songs"}},
-            {'title':self.language(30202), 'params':{'path':"playlists", 'playlist_type':"user"}},
-            {'title':self.language(30204), 'params':{'path':"playlists", 'playlist_type':"auto"}},
-            {'title':self.language(30205), 'params':{'path':"filter", 'criteria':"artist"}},
-            {'title':self.language(30206), 'params':{'path':"filter", 'criteria':"album"}},
-            {'title':self.language(30207), 'params':{'path':"filter", 'criteria':"genre"}}
+            {'title':  self.language(30201),    # All Songs
+             'params': {'action':  'display',
+                        'content': 'songs'}},
+            {'title':  self.language(30202),    # Playlists
+             'params': {'action':  'display',
+                        'content': 'playlists',
+                        'type':    'user'}},
+            {'title':  self.language(30204),    # Insta mixes
+             'params': {'action':  'display',
+                        'content': 'playlists',
+                        'type':    'auto'}},
+            {'title':  self.language(30205),    # Artists
+             'params': {'action':  'display',
+                        'content': 'artists'}},
+            {'title':  self.language(30206),    # Albums
+             'params': {'action':  'display',
+                        'content': 'albums'}},
+            {'title':  self.language(30207),    # Genres
+             'params': {'action':  'display',
+                        'content': 'genres'}},
         )
+
+    """ Main function for handling a URL"""
+    def execute (self, params={}):
+
+        if 'action' not in params:
+            # No URL was specified. Display the main menu.
+            for menu_item in self.main_menu:
+                ps = menu_item['params']
+                cm = self.getContextMenu(params)
+            #    if 'playlist_id' in params:
+            #        cm = self.getPlayAllContextMenuItems(params['playlist_id'])
+            #    elif 'playlist_type' in params:
+            #        cm = self.getPlaylistsContextMenuItems(params['playlist_type'])
+                self.addFolderListItem(menu_item['title'], ps, cm)
+
+        elif params['action'] == 'display':
+            # Something should be displayed. Figure out what is specified to
+            #  determine what to display.
+            content = params.get('content', 'artists')
+            if content == 'songs':
+                self.displaySongs(artist=params.get('artist'),
+                                  playlist=params.get('playlist'),
+                                  album=params.get('album'))
+            elif content == 'playlists':
+                self.displayPlaylists(playlisttype=params.get('type'))
+            elif content == 'artists':
+                self.displayArtists()
+            elif content == 'albums':
+                self.displayAlbums()
+            elif content == 'genres':
+                self.displayGenres()
+            else:
+                self.execute()
+
+            self.xbmcplugin.endOfDirectory(handle=self.handle, succeeded=True)
+
+        elif params['action'] == 'play':
+            if params.get('songid'):
+                self.playSong(params['songid'])
+            else:
+                self.playAll()
+
+        elif params['action'] == 'update':
+            content = params.get('content', 'playlists')
+            if content == 'playlists':
+                self.updatePlaylists(playlisttype=params.get('type'),
+                                     playlistid=params.get('playlistid'))
+
+        elif params['action'] == 'maintenance':
+            mtype = params.get('type')
+            if mtype == 'clearcookie':
+                self.clearcookie()
+            elif mtype == 'clearcache':
+                self.clearCache()
+
+        else:
+            self.execute()
+
+
+
+
 
     def listMenu(self, params={}):
         get = params.get
@@ -94,7 +171,10 @@ class GoogleMusicNavigation():
         if len(contextMenu) > 0:
             li.addContextMenuItems(contextMenu, replaceItems=True)
 
-        return self.xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=li, isFolder=True)
+        return self.xbmcplugin.addDirectoryItem(handle=self.handle,
+                                                url=url,
+                                                listitem=li,
+                                                isFolder=True)
 
     def getImage(self, url, path):
         timeout = 10
