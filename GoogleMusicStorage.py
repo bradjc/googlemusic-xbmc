@@ -2,6 +2,15 @@ import os
 import sys
 import sqlite3
 
+"""
+Return a SQL row as a dict of column: value key-value pairs.
+"""
+def dict_factory (cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
 class GoogleMusicStorage():
     def __init__(self):
         self.xbmc     = sys.modules["__main__"].xbmc
@@ -14,6 +23,52 @@ class GoogleMusicStorage():
             (not self.settings.getSetting("firstrun"))):
             self.initializeDatabase()
             self.settings.setSetting("firstrun", "1")
+
+    """
+    Return a list of song dicts.
+    Set playlistid to None to get all songs.
+    Set selector to key value pairs to restrict the value in the given column.
+    """
+    def getSongs (self, playlistid=None, selector=None):
+        self._connect()
+        self.conn.row_factory = dict_factory
+
+        if playlistid == None:
+            # get all songs
+            where_str = ''
+            if selector:
+                where = []
+                for col,val in selector.iteritems():
+                    where.append('%s=%s' % col, val)
+                where_str = ' WHERE ' + ' and '.join(where)
+            sql = 'SELECT * FROM songs' + where
+            result = self.curs.execute(sql)
+
+        else:
+            sql = """SELECT * FROM songs
+                     INNER JOIN playlists_songs
+                         ON songs.song_id = playlists_songs.song_id
+                     WHERE playlists_songs.playlist_id = ?"""
+            result = self.curs.execute(sql, (playlist_id,))
+
+        songs = result.fetchall()
+        self.conn.close()
+
+        return songs
+
+    """
+    Return a song dict for a single song.
+    """
+    def getSong (self, songid):
+        self._connect()
+        self.conn.row_factory = dict_factory
+        result = self.curs.execute("""SELECT * FROM songs
+                                      WHERE id = ?
+                                   """, (songid,)
+                                   ).fetchone()
+        self.conn.close()
+
+        return result
 
     def getPlaylistSongs(self, playlist_id):
         self._connect()
@@ -52,12 +107,7 @@ class GoogleMusicStorage():
 
         return playlists
 
-    def getSong(self, song_id):
-        self._connect()
-        result = self.curs.execute("SELECT * FROM songs WHERE song_id = ?", (song_id,)).fetchone()
-        self.conn.close()
 
-        return result
 
     def storeApiSongs(self, api_songs, playlist_id = 'all_songs'):
         self._connect()
@@ -132,13 +182,8 @@ class GoogleMusicStorage():
         self.conn.commit()
         self.conn.close()
 
-    def getSongStreamUrl(self, song_id):
-        self._connect()
-        song = self.curs.execute("SELECT stream_url FROM songs WHERE song_id = ?", (song_id,)).fetchone()
-        stream_url = song[0]
-        self.conn.close()
 
-        return stream_url
+
 
     def isPlaylistFetched(self, playlist_id):
         fetched = False
@@ -152,11 +197,20 @@ class GoogleMusicStorage():
 
         return fetched
 
-    def updateSongStreamUrl(self, song_id, stream_url):
-        self._connect()
-        self.curs.execute("UPDATE songs SET stream_url = ? WHERE song_id = ?", (stream_url, song_id))
-        self.conn.commit()
-        self.conn.close()
+
+# no longer storing stream urls - they change too often
+#    def getSongStreamUrl(self, song_id):
+#        self._connect()
+#        song = self.curs.execute("SELECT stream_url FROM songs WHERE song_id = ?", (song_id,)).fetchone()
+#        stream_url = song[0]
+#        self.conn.close()
+#
+#        return stream_url
+#    def updateSongStreamUrl(self, song_id, stream_url):
+#        self._connect()
+#        self.curs.execute("UPDATE songs SET stream_url = ? WHERE song_id = ?", (stream_url, song_id))
+#        self.conn.commit()
+#        self.conn.close()
 
     def _connect(self):
         self.conn = sqlite3.connect(self.path)
