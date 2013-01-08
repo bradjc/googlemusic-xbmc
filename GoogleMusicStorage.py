@@ -4,10 +4,10 @@ import sqlite3
 
 class GoogleMusicStorage():
     def __init__(self):
-        self.xbmc = sys.modules["__main__"].xbmc
-        self.xbmcvfs = sys.modules["__main__"].xbmcvfs
+        self.xbmc     = sys.modules["__main__"].xbmc
+        self.xbmcvfs  = sys.modules["__main__"].xbmcvfs
         self.settings = sys.modules["__main__"].settings
-        self.path = os.path.join(self.xbmc.translatePath("special://database"), self.settings.getSetting('sqlite_db'))
+        self.path     = os.path.join(self.xbmc.translatePath("special://database"), self.settings.getSetting('sqlite_db'))
 
 		# Make sure to initialize database when it does not exist.
         if ((not os.path.isfile(self.path)) or
@@ -31,18 +31,18 @@ class GoogleMusicStorage():
 
     def getFilterSongs(self, filter_type, filter_criteria):
         self._connect()
- 
+
         result = self.curs.execute("SELECT * FROM songs WHERE "+ filter_type +"  = ?",(filter_criteria,))
         songs = result.fetchall()
 
         return songs
-                
+
     def getCriteria(self, criteria):
         self._connect()
         criterias = self.curs.execute("SELECT DISTINCT "+criteria+" FROM songs").fetchall()
         self.conn.close()
 
-        return criterias   
+        return criterias
 
     def getPlaylistsByType(self, playlist_type):
         self._connect()
@@ -162,53 +162,61 @@ class GoogleMusicStorage():
         self.conn = sqlite3.connect(self.path)
         self.curs = self.conn.cursor()
 
+
+    """
+    Create the tables for storing song information.
+    """
     def initializeDatabase(self):
         self._connect()
 
+        # nearly matches the reponse from the unofficial api
+        # doesn't include all fields
         self.curs.execute('''CREATE TABLE songs (
-                song_id VARCHAR NOT NULL PRIMARY KEY,           --# 0
-                comment VARCHAR,                                --# 1
-                rating INTEGER,                                 --# 2
-                last_played INTEGER,                            --# 3
-                disc INTEGER,                                   --# 4
-                composer VARCHAR,                               --# 5
-                year INTEGER,                                   --# 6
-                album VARCHAR,                                  --# 7
-                title VARCHAR,                                  --# 8
-                album_artist VARCHAR,                           --# 9
-                type INTEGER,                                   --# 10
-                track INTEGER,                                  --# 11
-                total_tracks INTEGER,                           --# 12
-                beats_per_minute INTEGER,                       --# 13
-                genre VARCHAR,                                  --# 14
-                play_count INTEGER,                             --# 15
-                creation_date INTEGER,                          --# 16
-                name VARCHAR,                                   --# 17
-                artist VARCHAR,                                 --# 18
-                url VARCHAR,                                    --# 19
-                total_discs INTEGER,                            --# 20
-                duration_millis INTEGER,                        --# 21
-                album_art_url VARCHAR,                          --# 22
-                display_name VARCHAR,                           --# 23
-                stream_url VARCHAR                              --# 24
+            id             VARCHAR NOT NULL PRIMARY KEY,           --# 0
+            comment        VARCHAR,                                --# 1
+            rating         INTEGER,                                 --# 2
+            lastPlayed     INTEGER,                            --# 3
+            disc           INTEGER,                                   --# 4
+            composer       VARCHAR,                               --# 5
+            year           INTEGER,                                   --# 6
+            album          VARCHAR,                                  --# 7
+            title          VARCHAR,                                  --# 8
+            albumArtist    VARCHAR,                           --# 9
+            type           INTEGER,                                   --# 10
+            track          INTEGER,                                  --# 11
+            totalTracks    INTEGER,                           --# 12
+            beatsPerMinute INTEGER,                       --# 13
+            genre          VARCHAR,                                  --# 14
+            playCount      INTEGER,                             --# 15
+            creationDate   INTEGER,                          --# 16
+            name           VARCHAR,                                   --# 17
+            artist         VARCHAR,                                 --# 18
+            url            VARCHAR,                                    --# 19
+            totalDiscs     INTEGER,                            --# 20
+            durationMillis INTEGER,                        --# 21
+            albumArtUrl    VARCHAR,                          --# 22
+            displayName    VARCHAR                           --# 23
         )''')
 
         self.curs.execute('''CREATE TABLE playlists (
-                playlist_id VARCHAR NOT NULL PRIMARY KEY,
-                name VARCHAR,
-                type VARCHAR,
-                fetched BOOLEAN
+            playlist_id VARCHAR NOT NULL PRIMARY KEY,
+            name        VARCHAR,
+            type        VARCHAR,
+            fetched     BOOLEAN
         )''')
 
         self.curs.execute('''CREATE TABLE playlists_songs (
-                playlist_id VARCHAR,
-                song_id VARCHAR,
-                FOREIGN KEY(playlist_id) REFERENCES playlists(playlist_id) ON DELETE CASCADE,
-                FOREIGN KEY(song_id) REFERENCES songs(song_id) ON DELETE CASCADE
+            playlist_id VARCHAR,
+            song_id     VARCHAR,
+            FOREIGN KEY(playlist_id) REFERENCES playlists(playlist_id)
+                ON DELETE CASCADE,
+            FOREIGN KEY(song_id) REFERENCES songs(song_id) ON DELETE CASCADE
         )''')
 
-        self.curs.execute('''CREATE INDEX playlistindex ON playlists_songs(playlist_id)''')
-        self.curs.execute('''CREATE INDEX songindex ON playlists_songs(song_id)''')
+        self.curs.execute(
+            '''CREATE INDEX playlistindex ON playlists_songs(playlist_id)''')
+        self.curs.execute(
+            '''CREATE INDEX songindex ON playlists_songs(song_id)''')
 
         self.conn.commit()
         self.conn.close()
