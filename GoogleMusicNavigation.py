@@ -11,17 +11,18 @@ import GoogleMusicApi
 ADDON = xbmcaddon.Addon(id='plugin.audio.googlemusic')
 
 class GoogleMusicNavigation():
-    def __init__(self, handle):
+    def __init__(self, root, handle):
         self.xbmc       = sys.modules["__main__"].xbmc
         self.xbmcgui    = sys.modules["__main__"].xbmcgui
         self.xbmcplugin = sys.modules["__main__"].xbmcplugin
         self.xbmcvfs    = sys.modules["__main__"].xbmcvfs
-        
+
         self.settings   = sys.modules["__main__"].settings
         self.language   = sys.modules["__main__"].language
         self.dbg        = sys.modules["__main__"].dbg
         self.common     = sys.modules["__main__"].common
 
+        self.root       = root
         self.handle     = int(handle)
 
         self.api = GoogleMusicApi.GoogleMusicApi()
@@ -54,8 +55,8 @@ class GoogleMusicNavigation():
 
         if 'action' not in params:
             params['action'] = 'display'
-            
-        
+
+
         if params['action'] == 'display':
             # Something should be displayed. Figure out what is specified to
             #  determine what to display.
@@ -70,7 +71,8 @@ class GoogleMusicNavigation():
             elif content == 'songs':
                 self.displaySongs(artist=params.get('artist'),
                                   playlistid=params.get('playlistid'),
-                                  album=params.get('album'))
+                                  album=params.get('album'),
+                                  genre=params.get('genre'))
             elif content == 'playlists':
                 self.displayPlaylists(playlisttype=params.get('type'))
             elif content == 'artists':
@@ -129,11 +131,11 @@ class GoogleMusicNavigation():
                 params['playlistid'] = playlistid
             cm.append((self.language(30301),
                        'XBMC.RunPlugin(%s?%s)' \
-                        % self.handle, urllib.urlencode(params)))
+                        % self.root, urllib.urlencode(params)))
             params['shuffle'] = 'true'
             cm.append((self.language(30302),
                        'XBMC.RunPlugin(%s?%s)' \
-                        % self.handle, urllib.urlencode(params)))
+                        % self.root, urllib.urlencode(params)))
 
 
             if playlistid:
@@ -144,7 +146,7 @@ class GoogleMusicNavigation():
                 }
                 cm.append((self.language(30303),
                     'XBMC.RunPlugin(%s?%s)' \
-                    % (self.handle, urllib.urlencode(params))))
+                    % (self.root, urllib.urlencode(params))))
 
         elif content == 'playlists':
             params = {
@@ -154,7 +156,7 @@ class GoogleMusicNavigation():
             }
             cm.append((self.language(30304),
                 'XBMC.RunPlugin(%s?%s)' \
-                % (self.handle, urllib.urlencode(params))))
+                % (self.root, urllib.urlencode(params))))
 
         return cm
 
@@ -164,7 +166,7 @@ class GoogleMusicNavigation():
         li = self.xbmcgui.ListItem(name)
         li.setProperty('Folder', 'true')
 
-        url = '%s?%s' % (self.handle, urllib.urlencode(params))
+        url = '%s?%s' % (self.root, urllib.urlencode(params))
 
         if len(contextMenu) > 0:
             li.addContextMenuItems(contextMenu, replaceItems=True)
@@ -201,7 +203,7 @@ class GoogleMusicNavigation():
 
         else:
             # No specifier given, display all songs
-            songs = self.aip.getPlaylistSongs('all_songs')
+            songs = self.api.getSongs()
 
         # Add all of the returned songs to the output
         for song in songs:
@@ -211,7 +213,7 @@ class GoogleMusicNavigation():
                 'action': 'play',
                 'songid': songid,
             }
-            url    = '%s?%s' % (self.handle, urllib.urlencode(params))
+            url    = '%s?%s' % (self.root, urllib.urlencode(params))
             self.xbmcplugin.addDirectoryItem(handle=self.handle,
                                              url=url,
                                              listitem=li)
@@ -237,9 +239,9 @@ class GoogleMusicNavigation():
     Display a list of artists.
     """
     def displayArtists (self):
-        self.common.logs('Displaying artists.')
+        self.common.log('Displaying artists.')
 
-        artists = self.api.getArtists():
+        artists = self.api.getArtists()
         for artist in artists:
             params = {
                 'action': 'display',
@@ -403,14 +405,14 @@ class GoogleMusicNavigation():
         for song in songs:
             params['songid'] = song['id'].encode('utf-8')
             li = self.createSongListItem(song)
-            playlist.add('%s?%s' % (self.handle, urllib.urlencode(params)), li)
+            playlist.add('%s?%s' % (self.root, urllib.urlencode(params)), li)
 
         if shuffle:
             playlist.shuffle()
 
         self.xbmc.executebuiltin('playlist.playoffset(music , 0)')
 
-    
+
     def updatePlaylists (self, playlisttype, playlistid):
         if playlisttype:
             self.api.updatePlaylists(playlisttype)

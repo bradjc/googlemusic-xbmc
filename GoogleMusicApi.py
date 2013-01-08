@@ -53,26 +53,26 @@ class GoogleMusicApi():
             playlists = self.storage.getPlaylists(playlisttype)
 
         return playlists
-"""
-    def getPlaylistSongs(self, playlist_id, forceRenew=False):
-        if not self.storage.isPlaylistFetched(playlist_id) or forceRenew:
-            self.updatePlaylistSongs(playlist_id)
+    """
+        def getPlaylistSongs(self, playlist_id, forceRenew=False):
+            if not self.storage.isPlaylistFetched(playlist_id) or forceRenew:
+                self.updatePlaylistSongs(playlist_id)
 
-        songs = self.storage.getPlaylistSongs(playlist_id)
+            songs = self.storage.getPlaylistSongs(playlist_id)
 
-        return songs
+            return songs
 
-    def getPlaylistsByType(self, playlist_type, forceRenew=False):
-        if forceRenew:
-            self.updatePlaylists(playlist_type)
+        def getPlaylistsByType(self, playlist_type, forceRenew=False):
+            if forceRenew:
+                self.updatePlaylists(playlist_type)
 
-        playlists = self.storage.getPlaylistsByType(playlist_type)
-        if len(playlists) == 0 and not forceRenew:
-            self.updatePlaylists(playlist_type)
             playlists = self.storage.getPlaylistsByType(playlist_type)
+            if len(playlists) == 0 and not forceRenew:
+                self.updatePlaylists(playlist_type)
+                playlists = self.storage.getPlaylistsByType(playlist_type)
 
-        return playlists
-"""
+            return playlists
+    """
 
     """
     Return the song dict for a single song.
@@ -158,13 +158,13 @@ class GoogleMusicApi():
 
         return ge
 
-"""
-    def getFilterSongs(self, filter_type, filter_criteria):
-        songs = self.storage.getFilterSongs(filter_type, filter_criteria)
+    """
+        def getFilterSongs(self, filter_type, filter_criteria):
+            songs = self.storage.getFilterSongs(filter_type, filter_criteria)
 
-        return songs
+            return songs
 
-    def getCriteria(self, criteria):
-        return self.storage.getCriteria(criteria)
-"""
+        def getCriteria(self, criteria):
+            return self.storage.getCriteria(criteria)
+    """
 

@@ -95,7 +95,7 @@ class GoogleMusicStorage():
         vals = result.fetchall()
         return vals
 
-"""
+    """
     def getPlaylistSongs(self, playlist_id):
         self._connect()
 
@@ -132,7 +132,7 @@ class GoogleMusicStorage():
         self.conn.close()
 
         return playlists
-"""
+    """
 
     """
     Save a list of song dicts to the databse.
@@ -235,19 +235,19 @@ class GoogleMusicStorage():
         return fetched
 
 
-# no longer storing stream urls - they change too often
-#    def getSongStreamUrl(self, song_id):
-#        self._connect()
-#        song = self.curs.execute("SELECT stream_url FROM songs WHERE song_id = ?", (song_id,)).fetchone()
-#        stream_url = song[0]
-#        self.conn.close()
-#
-#        return stream_url
-#    def updateSongStreamUrl(self, song_id, stream_url):
-#        self._connect()
-#        self.curs.execute("UPDATE songs SET stream_url = ? WHERE song_id = ?", (stream_url, song_id))
-#        self.conn.commit()
-#        self.conn.close()
+    # no longer storing stream urls - they change too often
+    #    def getSongStreamUrl(self, song_id):
+    #        self._connect()
+    #        song = self.curs.execute("SELECT stream_url FROM songs WHERE song_id = ?", (song_id,)).fetchone()
+    #        stream_url = song[0]
+    #        self.conn.close()
+    #
+    #        return stream_url
+    #    def updateSongStreamUrl(self, song_id, stream_url):
+    #        self._connect()
+    #        self.curs.execute("UPDATE songs SET stream_url = ? WHERE song_id = ?", (stream_url, song_id))
+    #        self.conn.commit()
+    #        self.conn.close()
 
     def _connect(self):
         self.conn = sqlite3.connect(self.path)

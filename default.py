@@ -20,6 +20,7 @@ if (__name__ == "__main__" ):
     else:
         print plugin
 
+    root   = sys.argv[0]
     handle = sys.argv[1]
     url    = sys.argv[2]
 
@@ -31,8 +32,9 @@ if (__name__ == "__main__" ):
     storage = GoogleMusicStorage.GoogleMusicStorage()
 
     import GoogleMusicNavigation
-    navigation = GoogleMusicNavigation.GoogleMusicNavigation(handle)
+    navigation = GoogleMusicNavigation.GoogleMusicNavigation(root, handle)
 
+    params = common.getParameters(url)
     navigation.execute(params)
 
 #    if not url:
@@ -41,10 +43,10 @@ if (__name__ == "__main__" ):
 #        params = common.getParameters(url)
 #        if 'action' in params:
 #            navigation.execute(params)
-   #     get = params.get
-    #    if params.get("action"):
-     #       navigation.executeAction(params)
-      #  elif (get("path")):
-       #     navigation.listMenu(params)
+#        get = params.get
+#        if params.get("action"):
+#            navigation.executeAction(params)
+#        elif (get("path")):
+#            navigation.listMenu(params)
 #        else:
 #            print plugin + " ARGV Nothing done. Verify params " + repr(params)
