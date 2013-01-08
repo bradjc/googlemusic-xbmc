@@ -221,17 +221,19 @@ class GoogleMusicStorage():
         self.conn.commit()
         self.conn.close()
 
-    def _getSongDisplayName(self, api_song):
-        displayName = ""
-        song = api_song.get
-        song_name = song("name").strip()
-        song_artist = song("artist").strip()
+    """
+    Return a nice string of Artist - Song if the fields are set.
+    """
+    def _getSongDisplayName(self, song):
+        displayName = ''
+        song_name   = song['name'].strip()
+        song_artist = song['artist'].strip()
 
-        if ( (len(song_artist) == 0) and (len(song_name) == 0)):
-            displayName = "UNKNOWN"
-        elif (len(song_artist) > 0):
+        if len(song_artist) == 0 and len(song_name) == 0:
+            displayName = 'UNKNOWN'
+        elif len(song_artist) > 0:
             displayName += song_artist
-            if (len(song_name) > 0):
+            if len(song_name) > 0:
                 displayName += " - " + song_name
         else:
             displayName += song_name
