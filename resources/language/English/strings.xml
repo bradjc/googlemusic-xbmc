@@ -18,7 +18,7 @@
     <string id="30205">Artists</string>
     <string id="30206">Albums</string>
     <string id="30207">Genres</string>
-    
+
     <!-- context menu items -->
     <string id="30301">Play all</string>
     <string id="30302">Play all &amp; shuffle</string>
@@ -27,5 +27,7 @@
 
     <!-- messages -->
     <string id="30101">Login failed</string>
-    <string id="30102">Invalid credentials</string>
+    <string id="30102">Invalid credentials entered.</string>
+    <string id="30103">Note: if you are using two-factor authentication you</string>
+    <string id="30104">need an application specific password.</string>
 </strings>

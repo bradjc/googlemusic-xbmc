@@ -48,6 +48,15 @@ class GoogleMusicStorage():
             result = self.curs.execute(sql, (playlist_id,))
 
         songs = result.fetchall()
+
+        # Check if there are no songs. In that case return None instead of an
+        # empty list.
+        if len(songs) == 0:
+            sql = 'SELECT COUNT(*) FROM songs'
+            result = self.curs.execute(sql).fetchone()
+            if result[0] == 0:
+                songs = None
+
         self.conn.close()
 
         return songs
