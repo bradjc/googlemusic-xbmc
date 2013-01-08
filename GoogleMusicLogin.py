@@ -42,6 +42,7 @@ class GoogleMusicLogin():
                           self.language(30102),
                           self.language(30103),
                           self.language(30104))
+                return False
             else:
                 self.common.log("Login succeeded")
                 self.gmusicapi.session.cookies.save(filename=self._cookie,
@@ -55,3 +56,5 @@ class GoogleMusicLogin():
             self.gmusicapi.session.cookies.load(filename=self._cookie,
                                                 ignore_discard=True)
             self.gmusicapi.session.logged_in = True
+
+        return True

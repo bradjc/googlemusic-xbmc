@@ -48,16 +48,12 @@ class GoogleMusicStorage():
             result = self.curs.execute(sql, (playlist_id,))
 
         songs = result.fetchall()
+        self.conn.close()
 
         # Check if there are no songs. In that case return None instead of an
         # empty list.
-        if len(songs) == 0:
-            sql = 'SELECT COUNT(*) FROM songs'
-            result = self.curs.execute(sql).fetchone()
-            if result[0] == 0:
-                songs = None
-
-        self.conn.close()
+        if len(songs) == 0 and self.countSongs() == 0:
+            songs = None
 
         return songs
 
@@ -72,6 +68,9 @@ class GoogleMusicStorage():
                                    """, (songid,)
                                    ).fetchone()
         self.conn.close()
+
+        if not result and self.countSongs() == 0:
+            result = None
 
         return result
 
@@ -88,6 +87,9 @@ class GoogleMusicStorage():
         playlists = result.fetchall()
         self.conn.close()
 
+        if len(playlists) == 0 and self.countSongs() == 0:
+            playlists = None
+
         return playlists
 
     """
@@ -102,6 +104,10 @@ class GoogleMusicStorage():
         result = self.curs.execute(sql, (field,))
 
         vals = result.fetchall()
+
+        if len(vals) == 0 and self.countSongs() == 0:
+            vals = None
+
         return vals
 
     """
@@ -242,6 +248,17 @@ class GoogleMusicStorage():
             self.conn.close()
 
         return fetched
+
+    def countSongs (self):
+        self._connect()
+
+        sql = 'SELECT COUNT(*) FROM songs'
+        result = self.curs.execute(sql).fetchone()
+        count = result[0]
+
+        self.conn.close()
+
+        return count
 
 
     # no longer storing stream urls - they change too often

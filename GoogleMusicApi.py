@@ -84,8 +84,8 @@ class GoogleMusicApi():
     Query the google music api for songs.
     """
     def updateSongs (self, playlistid=None):
-        self.login.login()
-        if playlist_id is None:
+        if not self.login.login(): return []
+        if playlistid is None:
             songs = self.gmusicapi.get_all_songs()
         else:
             songs = self.gmusicapi.get_playlist_songs(playlistid)
