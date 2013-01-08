@@ -16,7 +16,8 @@ class GoogleMusicStorage():
         self.xbmc     = sys.modules["__main__"].xbmc
         self.xbmcvfs  = sys.modules["__main__"].xbmcvfs
         self.settings = sys.modules["__main__"].settings
-        self.path     = os.path.join(self.xbmc.translatePath("special://database"), self.settings.getSetting('sqlite_db'))
+        self.path = os.path.join(self.xbmc.translatePath("special://database"),
+                                 self.settings.getSetting('sqlite_db'))
 
 		# Make sure to initialize database when it does not exist.
         if ((not os.path.isfile(self.path)) or
@@ -35,13 +36,8 @@ class GoogleMusicStorage():
 
         if playlistid == None:
             # get all songs
-            where_str = ''
-            if selector:
-                where = []
-                for col,val in selector.iteritems():
-                    where.append('%s=%s' % col, val)
-                where_str = ' WHERE ' + ' and '.join(where)
-            sql = 'SELECT * FROM songs' + where
+            where  = self._dictToWhere(selector)
+            sql    = 'SELECT * FROM songs' + where
             result = self.curs.execute(sql)
 
         else:
@@ -70,6 +66,36 @@ class GoogleMusicStorage():
 
         return result
 
+    """
+    Get list of playlist dicts. Dict is the same as the columns in the
+    playlist table.
+    """
+    def getPlaylists (self, playlisttype):
+        self._connect()
+        self.conn.row_factory = dict_factory
+
+        sql = "SELECT * FROM playlists WHERE playlists.type = ?"
+        result = self.curs.execute(sql, (playlisttype,))
+        playlists = result.fetchall()
+        self.conn.close()
+
+        return playlists
+
+    """
+    Returns a list of all values in the specified column of the songs table.
+    Selector can be used to refine the results.
+    """
+    def getDistinct (self, field, selector=None):
+        self._connect()
+
+        where = self._dictToWhere(selector)
+        sql = "SELECT DISTINCT ? FROM songs" + where
+        result = self.curs.execute(sql, (field,))
+
+        vals = result.fetchall()
+        return vals
+
+"""
     def getPlaylistSongs(self, playlist_id):
         self._connect()
 
@@ -106,7 +132,7 @@ class GoogleMusicStorage():
         self.conn.close()
 
         return playlists
-
+"""
 
 
     def storeApiSongs(self, api_songs, playlist_id = 'all_songs'):
@@ -253,18 +279,17 @@ class GoogleMusicStorage():
         )''')
 
         self.curs.execute('''CREATE TABLE playlists (
-            playlist_id VARCHAR NOT NULL PRIMARY KEY,
-            name        VARCHAR,
-            type        VARCHAR,
-            fetched     BOOLEAN
+            id      VARCHAR NOT NULL PRIMARY KEY,
+            name    VARCHAR,
+            type    VARCHAR,
+            fetched BOOLEAN
         )''')
 
         self.curs.execute('''CREATE TABLE playlists_songs (
             playlist_id VARCHAR,
             song_id     VARCHAR,
-            FOREIGN KEY(playlist_id) REFERENCES playlists(playlist_id)
-                ON DELETE CASCADE,
-            FOREIGN KEY(song_id) REFERENCES songs(song_id) ON DELETE CASCADE
+            FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+            FOREIGN KEY(song_id) REFERENCES songs(id) ON DELETE CASCADE
         )''')
 
         self.curs.execute(
@@ -306,3 +331,16 @@ class GoogleMusicStorage():
                 song[key] = api_song[key]
 
         return song
+
+
+    """
+    Turn a dictionary into an SQL WHERE string
+    """
+    def _dictToWhere (self, selector):
+        where_str = ''
+        if selector:
+            where = []
+            for col,val in selector.iteritems():
+                where.append('%s=%s' % col, val)
+            where_str = ' WHERE ' + ' and '.join(where)
+        return where_str

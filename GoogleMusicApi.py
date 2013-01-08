@@ -11,7 +11,7 @@ class GoogleMusicApi():
         self.xbmc       = sys.modules["__main__"].xbmc
         self.xbmcgui    = sys.modules["__main__"].xbmcgui
         self.xbmcplugin = sys.modules["__main__"].xbmcplugin
-        
+
         self.settings   = sys.modules["__main__"].settings
         self.language   = sys.modules["__main__"].language
         self.dbg        = sys.modules["__main__"].dbg
@@ -90,7 +90,7 @@ class GoogleMusicApi():
         else:
             songs = self.gmusicapi.get_playlist_songs(playlistid)
 
-        self.storage.storeApiSongs(songs, playlistid)
+        self.storage.storeSongs(songs, playlistid)
 
     """
     Query for a list of playlists.
@@ -167,4 +167,4 @@ class GoogleMusicApi():
     def getCriteria(self, criteria):
         return self.storage.getCriteria(criteria)
 """
-        
+
