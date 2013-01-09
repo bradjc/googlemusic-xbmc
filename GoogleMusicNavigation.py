@@ -243,6 +243,8 @@ class GoogleMusicNavigation():
 
         artists = self.api.getArtists()
         for artist in artists:
+            if not artist['name']:
+                continue
             params = {
                 'action': 'display',
                 'content': 'albums',
@@ -262,6 +264,8 @@ class GoogleMusicNavigation():
 
         albums = self.api.getAlbums(selector)
         for album in albums:
+            if not album['name']:
+                continue
             params = {
                 'action': 'display',
                 'content': 'songs',
@@ -279,6 +283,8 @@ class GoogleMusicNavigation():
 
         genres = self.api.getGenres()
         for genre in genres:
+            if not genre['name']:
+                continue
             params = {
                 'action': 'display',
                 'content': 'songs',
