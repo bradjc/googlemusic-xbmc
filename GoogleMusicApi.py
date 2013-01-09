@@ -159,6 +159,64 @@ class GoogleMusicApi():
         return ge
 
     """
+    Queries google for results related to the search string.
+
+    Returns a tuple (songs, artists, albums).
+    songs is a list of song dicts
+    artists is a list of song dicts
+    albums is a list of album dicts
+    Each list could be empty
+    album = {
+        'artistName': 'The Cat Empire',
+        'imageUrl': '<url>',
+        'albumArtist': 'The Cat Empire',
+        'albumName': 'Cities: The Cat Empire Project'
+    }
+    """
+    def doSearch (self, search_str):
+        self.login.login()
+        result  = self.gmusicapi.search(search_str)
+        self.common.log(result)
+        songs   = result['song_hits']
+        artists = result['artist_hits']
+        albums  = result['album_hits']
+
+        for i in range(len(songs)):
+            songs[i] = self.fixSongDict(songs[i])
+
+        for i in range(len(artists)):
+            artists[i] = self.fixSongDict(artists[i])
+
+        return (songs, artists, albums)
+
+    """
+    Adds in displayName and albumArtUrl keys to the song dict.
+    This is not an API function and should be moved to a different class.
+    """
+    def fixSongDict (self, song):
+        if 'displayName' not in song:
+            song['displayName'] = self._getSongDisplayName(song)
+        song.setdefault('albumArtUrl')
+        return song
+
+    def _getSongDisplayName(self, song):
+        displayName = ''
+        song_name   = song['name'].strip()
+        song_artist = song['artist'].strip()
+
+        if len(song_artist) == 0 and len(song_name) == 0:
+            displayName = 'UNKNOWN'
+        elif len(song_artist) > 0:
+            displayName += song_artist
+            if len(song_name) > 0:
+                displayName += " - " + song_name
+        else:
+            displayName += song_name
+
+        return displayName
+
+
+    """
         def getFilterSongs(self, filter_type, filter_criteria):
             songs = self.storage.getFilterSongs(filter_type, filter_criteria)
 

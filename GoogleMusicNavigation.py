@@ -28,6 +28,8 @@ class GoogleMusicNavigation():
         self.api = GoogleMusicApi.GoogleMusicApi()
 
         self.main_menu = (
+            {'title':  self.language(30208),    # Search
+             'params': {'action':  'search'}},
             {'title':  self.language(30201),    # All Songs
              'params': {'action':  'display',
                         'content': 'songs'}},
@@ -106,6 +108,12 @@ class GoogleMusicNavigation():
             elif mtype == 'clearcache':
                 self.clearCache()
 
+        elif params['action'] == 'search':
+            search_str = self.getUserInput(title=self.language(30105))
+            self.common.log('SEARCH: "%s"' % (search_str))
+            self.displaySearchResults(search_str)
+            self.xbmcplugin.endOfDirectory(handle=self.handle, succeeded=True)
+
         else:
             self.execute()
 
@@ -157,8 +165,6 @@ class GoogleMusicNavigation():
             cm.append((self.language(30304),
                 'XBMC.RunPlugin(%s?%s)' \
                 % (self.root, urllib.urlencode(self._encodeDict(params)))))
-
-        self.common.log(cm)
 
         return cm
 
@@ -297,6 +303,38 @@ class GoogleMusicNavigation():
                 'genre': genre['name']
             }
             self.addFolderListItem(genre['name'], params, [])
+
+    """
+    Display the results from the gmusic search.
+    """
+    def displaySearchResults (self, search_str):
+        songs,artists,albums = self.api.doSearch(search_str)
+
+        for song in songs:
+            params = {
+                'action': 'display',
+                'content': 'songs',
+                'album': song['album'],
+                'artist': song['artist'],
+            }
+            self.addFolderListItem(song['displayName'], params, [])
+
+        # artists is a list of song dicts
+        for artist in artists:
+            params = {
+                'action': 'display',
+                'content': 'albums',
+                'artist': artist['artist']
+            }
+            self.addFolderListItem(artist['artist'], params, [])
+
+        for album in albums:
+            params = {
+                'action': 'display',
+                'content': 'songs',
+                'album': album['albumName'],
+            }
+            self.addFolderListItem(album['albumName'], params, [])
 
 
     """
@@ -449,6 +487,23 @@ class GoogleMusicNavigation():
             self.xbmcvfs.delete(cookie_file)
 
         self.settings.setSetting('logged_in', "")
+
+    # This function raises a keyboard for user input
+    def getUserInput (self, title = "Input", default="", hidden=False):
+        result = None
+
+        # Fix for when this functions is called with default=None
+        if not default:
+            default = ""
+
+        keyboard = xbmc.Keyboard(default, title)
+        keyboard.setHiddenInput(hidden)
+        keyboard.doModal()
+
+        if keyboard.isConfirmed():
+            result = keyboard.getText()
+
+        return result
 
     def _encodeDict (self, in_dict):
         out_dict = {}
