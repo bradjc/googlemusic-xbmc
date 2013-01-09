@@ -206,8 +206,6 @@ class GoogleMusicNavigation():
             songs = self.api.getSongs()
 
         # Add all of the returned songs to the output
-#        self.common.log(songs)
-
         for song in songs:
             songid = song['id'].encode('utf-8')
             li     = self.createSongListItem(song)

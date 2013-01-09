@@ -48,7 +48,6 @@ class GoogleMusicStorage():
             result = self.curs.execute(sql, (playlistid,))
 
         songs = result.fetchall()
-        self.common.log(songs)
         self.conn.close()
 
         # Check if there are no songs. In that case return None instead of an
@@ -102,7 +101,6 @@ class GoogleMusicStorage():
         where = self._dictToWhere(selector)
         sql = "SELECT DISTINCT " + field + " FROM songs" + where + \
               " ORDER BY " + field
-        self.common.log(sql)
         result = self.curs.execute(sql)
 
         vals = result.fetchall()
@@ -272,7 +270,6 @@ class GoogleMusicStorage():
 
         sql = 'SELECT COUNT(*) FROM playlists'
         result = self.curs.execute(sql).fetchone()
-        self.common.log(result)
         count = result['COUNT(*)']
 
         self.conn.close()
