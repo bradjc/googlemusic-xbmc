@@ -130,7 +130,7 @@ class GoogleMusicApi():
         # now, but allows for easy additions later without breaking old code.
         ad = []
         for artist in artists:
-            ad.append({'name':artist})
+            ad.append({'name':artist['artist']})
 
         return ad
 
@@ -142,7 +142,7 @@ class GoogleMusicApi():
 
         al = []
         for album in albums:
-            al.append({'name':album})
+            al.append({'name':album['album']})
 
         return al
 
@@ -154,7 +154,7 @@ class GoogleMusicApi():
 
         ge = []
         for genre in genres:
-            ge.append({'name':genre})
+            ge.append({'name':genre['genre']})
 
         return ge
 

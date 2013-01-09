@@ -130,12 +130,12 @@ class GoogleMusicNavigation():
             if playlistid:
                 params['playlistid'] = playlistid
             cm.append((self.language(30301),
-                       'XBMC.RunPlugin(%s?%s)' \
-                        % self.root, urllib.urlencode(params)))
+                   'XBMC.RunPlugin(%s?%s)' \
+                    % (self.root, urllib.urlencode(self._encodeDict(params)))))
             params['shuffle'] = 'true'
             cm.append((self.language(30302),
-                       'XBMC.RunPlugin(%s?%s)' \
-                        % self.root, urllib.urlencode(params)))
+                    'XBMC.RunPlugin(%s?%s)' \
+                    % (self.root, urllib.urlencode(self._encodeDict(params)))))
 
 
             if playlistid:
@@ -146,7 +146,7 @@ class GoogleMusicNavigation():
                 }
                 cm.append((self.language(30303),
                     'XBMC.RunPlugin(%s?%s)' \
-                    % (self.root, urllib.urlencode(params))))
+                    % (self.root, urllib.urlencode(self._encodeDict(params)))))
 
         elif content == 'playlists':
             params = {
@@ -156,7 +156,7 @@ class GoogleMusicNavigation():
             }
             cm.append((self.language(30304),
                 'XBMC.RunPlugin(%s?%s)' \
-                % (self.root, urllib.urlencode(params))))
+                % (self.root, urllib.urlencode(self._encodeDict(params)))))
 
         return cm
 
@@ -166,7 +166,7 @@ class GoogleMusicNavigation():
         li = self.xbmcgui.ListItem(name)
         li.setProperty('Folder', 'true')
 
-        url = '%s?%s' % (self.root, urllib.urlencode(params))
+        url = '%s?%s' % (self.root, urllib.urlencode(self._encodeDict(params)))
 
         if len(contextMenu) > 0:
             li.addContextMenuItems(contextMenu, replaceItems=True)
@@ -191,9 +191,9 @@ class GoogleMusicNavigation():
 
         elif artist or album or genre:
             # Use the other information to display a list of songs
-            selectors = {}
+            selector = {}
             if artist:
-                selectors['artist'] = artist
+                selector['artist'] = artist
             if album:
                 selector['album'] = album
             if genre:
@@ -206,6 +206,8 @@ class GoogleMusicNavigation():
             songs = self.api.getSongs()
 
         # Add all of the returned songs to the output
+#        self.common.log(songs)
+
         for song in songs:
             songid = song['id'].encode('utf-8')
             li     = self.createSongListItem(song)
@@ -439,4 +441,15 @@ class GoogleMusicNavigation():
             self.xbmcvfs.delete(cookie_file)
 
         self.settings.setSetting('logged_in', "")
+
+    def _encodeDict (self, in_dict):
+        out_dict = {}
+        for k, v in in_dict.iteritems():
+            if isinstance(v, unicode):
+                v = v.encode('utf8')
+            elif isinstance(v, str):
+                # Must be encoded in UTF-8
+                v.decode('utf8')
+            out_dict[k] = v
+        return out_dict
 

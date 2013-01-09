@@ -16,6 +16,7 @@ class GoogleMusicStorage():
         self.xbmc     = sys.modules["__main__"].xbmc
         self.xbmcvfs  = sys.modules["__main__"].xbmcvfs
         self.settings = sys.modules["__main__"].settings
+        self.common   = sys.modules["__main__"].common
         self.path = os.path.join(self.xbmc.translatePath("special://database"),
                                  self.settings.getSetting('sqlite_db'))
 
@@ -32,27 +33,27 @@ class GoogleMusicStorage():
     """
     def getSongs (self, playlistid=None, selector=None):
         self._connect()
-        self.conn.row_factory = dict_factory
 
         if playlistid == None:
             # get all songs
             where  = self._dictToWhere(selector)
-            sql    = 'SELECT * FROM songs' + where
+            sql    = 'SELECT * FROM songs' + where + ' ORDER BY artist'
             result = self.curs.execute(sql)
 
         else:
             sql = """SELECT * FROM songs
                      INNER JOIN playlists_songs
-                         ON songs.song_id = playlists_songs.song_id
+                         ON songs.id = playlists_songs.song_id
                      WHERE playlists_songs.playlist_id = ?"""
-            result = self.curs.execute(sql, (playlist_id,))
+            result = self.curs.execute(sql, (playlistid,))
 
         songs = result.fetchall()
+        self.common.log(songs)
         self.conn.close()
 
         # Check if there are no songs. In that case return None instead of an
         # empty list.
-        if len(songs) == 0 and self.countSongs() == 0:
+        if len(songs) == 0 and self.countSongs(playlistid) == 0:
             songs = None
 
         return songs
@@ -62,7 +63,7 @@ class GoogleMusicStorage():
     """
     def getSong (self, songid):
         self._connect()
-        self.conn.row_factory = dict_factory
+
         result = self.curs.execute("""SELECT * FROM songs
                                       WHERE id = ?
                                    """, (songid,)
@@ -80,14 +81,13 @@ class GoogleMusicStorage():
     """
     def getPlaylists (self, playlisttype):
         self._connect()
-        self.conn.row_factory = dict_factory
 
         sql = "SELECT * FROM playlists WHERE playlists.type = ?"
         result = self.curs.execute(sql, (playlisttype,))
         playlists = result.fetchall()
         self.conn.close()
 
-        if len(playlists) == 0 and self.countSongs() == 0:
+        if len(playlists) == 0 and self.countPlaylists() == 0:
             playlists = None
 
         return playlists
@@ -100,8 +100,10 @@ class GoogleMusicStorage():
         self._connect()
 
         where = self._dictToWhere(selector)
-        sql = "SELECT DISTINCT ? FROM songs" + where
-        result = self.curs.execute(sql, (field,))
+        sql = "SELECT DISTINCT " + field + " FROM songs" + where + \
+              " ORDER BY " + field
+        self.common.log(sql)
+        result = self.curs.execute(sql)
 
         vals = result.fetchall()
 
@@ -161,19 +163,19 @@ class GoogleMusicStorage():
             self.curs.execute("DELETE FROM songs")
         else:
             self.curs.execute("""DELETE FROM songs
-                                 WHERE song_id IN
+                                 WHERE id IN
                                      (SELECT song_id FROM playlists_songs
                                       WHERE playlist_id = ?)""",
-                              (playlist_id,))
+                              (playlistid,))
             self.curs.execute("""DELETE FROM playlists_songs
                                  WHERE playlist_id = ?""",
-                              (playlist_id,))
+                              (playlistid,))
             self.curs.executemany("""INSERT INTO playlists_songs
                                          (playlist_id, song_id)
                                      VALUES (?, ?)""",
                                   [(playlistid, s['id']) for s in songs])
 
-        def songs():
+        def yieldsongs():
             for song in songs:
                 song.setdefault('albumArtUrl')
                 song['displayName'] = self._getSongDisplayName(song)
@@ -186,15 +188,15 @@ class GoogleMusicStorage():
                          :totalTracks, :beatsPerMinute, :genre, :playCount,
                          :creationDate, :name, :artist, :url, :totalDiscs,
                          :durationMillis, :albumArtUrl, :displayName)"""
-        self.curs.executemany(sql, songs())
+        self.curs.executemany(sql, yieldsongs())
 
         # Set flags so we know what data was stored
-        if playlist_id == None:
+        if playlistid == None:
             self.settings.setSetting("fetched_all_songs", "1")
         else:
             self.curs.execute("""UPDATE playlists
                                  SET fetched = 1
-                                 WHERE id = ?""", (playlist_id,))
+                                 WHERE id = ?""", (playlistid,))
 
         self.conn.commit()
         self.conn.close()
@@ -249,12 +251,29 @@ class GoogleMusicStorage():
 
         return fetched
 
-    def countSongs (self):
+    def countSongs (self, playlistid=None):
         self._connect()
 
-        sql = 'SELECT COUNT(*) FROM songs'
+        if playlistid == None:
+            sql = 'SELECT COUNT(*) FROM songs'
+            result = self.curs.execute(sql).fetchone()
+        else:
+            sql = """SELECT COUNT(*) FROM playlists_songs
+                     WHERE playlist_id = ?"""
+            result = self.curs.execute(sql, (playlistid,)).fetchone()
+        count = result['COUNT(*)']
+
+        self.conn.close()
+
+        return count
+
+    def countPlaylists (self):
+        self._connect()
+
+        sql = 'SELECT COUNT(*) FROM playlists'
         result = self.curs.execute(sql).fetchone()
-        count = result[0]
+        self.common.log(result)
+        count = result['COUNT(*)']
 
         self.conn.close()
 
@@ -277,7 +296,9 @@ class GoogleMusicStorage():
 
     def _connect(self):
         self.conn = sqlite3.connect(self.path)
+        self.conn.row_factory = dict_factory
         self.curs = self.conn.cursor()
+
 
 
     """
@@ -378,6 +399,6 @@ class GoogleMusicStorage():
         if selector:
             where = []
             for col,val in selector.iteritems():
-                where.append('%s=%s' % col, val)
-            where_str = ' WHERE ' + ' and '.join(where)
+                where.append("%s='%s'" % (col, val))
+            where_str = " WHERE " + " and ".join(where)
         return where_str
