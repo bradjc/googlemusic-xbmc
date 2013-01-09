@@ -34,8 +34,15 @@ if (__name__ == "__main__" ):
     import GoogleMusicNavigation
     navigation = GoogleMusicNavigation.GoogleMusicNavigation(root, handle)
 
+    import GoogleMusicLogin
+
     params = common.getParameters(url)
-    navigation.execute(params)
+
+    try:
+        navigation.execute(params)
+    except GoogleMusicLogin.GoogleMusicLoginException:
+        # Couldn't login, just exit
+        pass
 
 #    if not url:
 #        navigation.execute()

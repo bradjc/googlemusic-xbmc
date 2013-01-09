@@ -205,9 +205,6 @@ class GoogleMusicNavigation():
             # No specifier given, display all songs
             songs = self.api.getSongs()
 
-        if not songs:
-            return
-
         # Add all of the returned songs to the output
         for song in songs:
             songid = song['id'].encode('utf-8')
